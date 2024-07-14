@@ -1,110 +1,90 @@
 #!/bin/bash
 
-USERID=$(id -u) # It gives user id
+USERID=$(id -u)
 TIMESTAMP=$(date +%F-%H-%M-%S)
-SCRIPT_NAME=$(basename "$0" | cut -d "." -f1)
-LOG_FILE="/tmp/${TIMESTAMP}-${SCRIPT_NAME}.log"
-
-# colors
+SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
+LOGFILE=/tmp/$SCRIPT_NAME-$TIMESTAMP.log
 R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
 
-echo "Script started executing at: $TIMESTAMP"
-echo "Log file: $LOG_FILE"
-
-# Check if the script is run as root
-if [ $USERID -ne 0 ]; then
-    echo -e "${R}Please run this script with sudo privileges${N}"
-    exit 1
-else
-    echo -e "${G}Here we go to installation${N}"
-fi
-
-VALIDATE() {
-    if [ $1 -ne 0 ]; then
-        echo -e "$2.......${R}Failed${N}" | tee -a "$LOG_FILE"
+VALIDATE(){
+   if [ $1 -ne 0 ]
+   then
+        echo -e "$2...$R FAILURE $N"
         exit 1
     else
-        echo -e "$2.....${G}Success${N}" | tee -a "$LOG_FILE"
+        echo -e "$2...$G SUCCESS $N"
     fi
 }
 
-# Disable the current Node.js module if enabled
-dnf module disable nodejs:18 -y &>>"$LOG_FILE"
-VALIDATE $? "Disabling current Node.js module"
+check_root(){
+    if [ $USERID -ne 0 ]
+    then
+        echo "Please run this script with root access."
+        exit 1
+    fi
+}
 
-# Enable Node.js 20 module
-dnf module enable nodejs:20 -y &>>"$LOG_FILE"
-VALIDATE $? "Enabling Node.js 20"
+check_root
 
-# Install Node.js 20
-dnf install nodejs -y &>>"$LOG_FILE"
-VALIDATE $? "Installing Node.js 20"
+dnf update -y >> $LOGFILE 2>&1
+VALIDATE $? "Updating Packages"
 
-# Check the installed Node.js version
-node -v &>>"$LOG_FILE"
-VALIDATE $? "Checking the version of Node.js"
+dnf module disable nodejs -y >> $LOGFILE 2>&1
+VALIDATE $? "Disabling default NodeJS module"
 
-# Install MySQL client
-dnf install mysql -y &>>"$LOG_FILE"
+dnf module enable nodejs:20 -y >> $LOGFILE 2>&1
+VALIDATE $? "Enabling NodeJS 20 module"
+
+dnf install nodejs -y >> $LOGFILE 2>&1
+VALIDATE $? "Installing NodeJS 20"
+
+useradd expense >> $LOGFILE 2>&1
+VALIDATE $? "Adding user 'expense'"
+
+mkdir /app >> $LOGFILE 2>&1
+VALIDATE $? "Creating /app directory"
+
+curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip >> $LOGFILE 2>&1
+VALIDATE $? "Downloading backend code"
+
+cd /app >> $LOGFILE 2>&1
+unzip /tmp/backend.zip >> $LOGFILE 2>&1
+VALIDATE $? "Unzipping backend code"
+
+npm install >> $LOGFILE 2>&1
+VALIDATE $? "Installing application dependencies"
+
+cat <<EOF > /etc/systemd/system/backend.service
+[Unit]
+Description=Backend Service
+
+[Service]
+User=expense
+Environment=DB_HOST="expense.db.test.ullagallu.cloud"
+ExecStart=/bin/node /app/index.js
+SyslogIdentifier=backend
+
+[Install]
+WantedBy=multi-user.target
+EOF
+VALIDATE $? "Creating backend service file"
+
+dnf install mysql -y >> $LOGFILE 2>&1
 VALIDATE $? "Installing MySQL client"
 
-# Check if the user 'wages' already exists
-if id "wages" &>/dev/null; then
-    echo -e "${Y}User 'wages' already exists, skipping creation${N}" | tee -a "$LOG_FILE"
-else
-    useradd wages &>>"$LOG_FILE"
-    VALIDATE $? "Creating user 'wages'"
-fi
+mysql -h expense.db.test.ullagallu.cloud -uroot -pExpenseApp@1 < /app/schema/backend.sql >> $LOGFILE 2>&1
+VALIDATE $? "Loading database schema"
 
-# Function to check if a directory exists and create it if not
-check_directory() {
-    if [ -d "$1" ]; then
-        echo -e "${Y}Folder '$1' already exists, skipping creation${N}" | tee -a "$LOG_FILE"
-    else
-        mkdir -p "$1" &>>"$LOG_FILE"
-        VALIDATE $? "Creating Folder '$1'"
-    fi
-}
+systemctl daemon-reload >> $LOGFILE 2>&1
+VALIDATE $? "Reloading systemd daemon"
 
-check_directory "/app"
+systemctl start backend >> $LOGFILE 2>&1
+VALIDATE $? "Starting backend service"
 
-# Check if the repository is already cloned
-if [ -d /app/.git ]; then
-    echo -e "${Y}Repository already cloned, skipping download${N}" | tee -a "$LOG_FILE"
-else
-    git clone https://github.com/ullagallu123/exp-backend.git /app &>>"$LOG_FILE"
-    VALIDATE $? "Downloading code into the app directory"
-fi
+systemctl enable backend >> $LOGFILE 2>&1
+VALIDATE $? "Enabling backend service"
 
-# Change to the app directory
-cd /app &>>"$LOG_FILE"
-VALIDATE $? "Changing to Folder '/app'"
-
-# Install npm dependencies
-npm install &>>"$LOG_FILE"
-VALIDATE $? "Building the application"
-
-# Copy the backend service file
-cp /home/ec2-user/devops-code/bash-scripts/backend.service /etc/systemd/system/ &>>"$LOG_FILE"
-VALIDATE $? "Adding service file for backend"
-
-# Configure the schema
-mysql -h db.ullagallubuffellomilk.store -uroot -psiva < /app/schema/backend.sql &>>"$LOG_FILE"
-VALIDATE $? "Configuring the schema"
-
-# Reload the systemd manager configuration
-systemctl daemon-reload &>>"$LOG_FILE"
-VALIDATE $? "Reloading the service files in the system"
-
-# Start the backend service
-systemctl start backend &>>"$LOG_FILE"
-VALIDATE $? "Starting the backend service"
-
-# Enable the backend service to start on boot
-systemctl enable backend &>>"$LOG_FILE"
-VALIDATE $? "Enabling backend service on boot"
-
-echo "Script execution completed at: $(date +%F-%H-%M-%S)" | tee -a "$LOG_FILE"
+echo -e "$G All tasks completed successfully! $N"

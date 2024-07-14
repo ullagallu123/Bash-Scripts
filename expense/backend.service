@@ -1,8 +1,0 @@
-[Unit]
-Description = Backend Service
-    
-[Service]
-User=wages
-Environment=DB_HOST="db.ullagallubuffellomilk.store"
-ExecStart=/bin/node /app/index.js
-SyslogIdentifier=backend
