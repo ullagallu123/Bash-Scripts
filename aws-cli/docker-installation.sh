@@ -19,4 +19,19 @@ sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
 sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
 sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
 
+sudo yum install java-21-amazon-corretto-devel
+
+cd /opt
+
+wget https://archive.apache.org/dist/maven/maven-3/3.9.8/binaries/apache-maven-3.9.8-bin.tar.gz
+
+mkdir -p maven
+
+tar -xvzf apache-maven-3.9.8-bin.tar.gz -C maven
+
+echo 'export PATH=/opt/maven/bin:"$PATH"' >> /home/ec2-user/.bash_profile
+
+source /home/ec2-user/.bash_profile
+
+
 # minikube start --network-plugin=cni --cni=calico
