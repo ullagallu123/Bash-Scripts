@@ -1,6 +1,6 @@
 #!/bin/bash
 aws ec2 run-instances \
-  --image-id ami-0ec0e125bb6c6e8ec \
+  --image-id ami-0a4408457f9a03be3 \
   --instance-type t3a.medium \
   --key-name siva \
   --user-data file://docker-installation.sh \
