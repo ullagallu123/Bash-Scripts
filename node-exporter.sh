@@ -26,24 +26,24 @@ else
 fi
 
 echo "Changing to /tmp directory..." | tee -a $LOGFILE
-cd /tmp
+cd /tmp >> $LOGFILE 2>&1
 VALIDATE $? "Changing to /tmp directory"
 
 echo "Downloading Node Exporter..." | tee -a $LOGFILE
-wget -q https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+wget -q https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz >> $LOGFILE 2>&1
 VALIDATE $? "Downloading Node Exporter"
 
 echo "Extracting Node Exporter..." | tee -a $LOGFILE
-tar -xzf node_exporter-1.6.1.linux-amd64.tar.gz
+tar -xzf node_exporter-1.6.1.linux-amd64.tar.gz >> $LOGFILE 2>&1
 VALIDATE $? "Extracting Node Exporter"
 
 echo "Moving Node Exporter binary to /usr/local/bin..." | tee -a $LOGFILE
-mv -f node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/
+mv -f node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/ >> $LOGFILE 2>&1
 VALIDATE $? "Moving Node Exporter binary to /usr/local/bin"
 
 if ! id "node_exporter" &>/dev/null; then
     echo "Creating node_exporter user..." | tee -a $LOGFILE
-    useradd -rs /bin/false node_exporter
+    useradd -rs /bin/false node_exporter >> $LOGFILE 2>&1
     VALIDATE $? "Creating node_exporter user"
 else
     echo "User node_exporter already exists." | tee -a $LOGFILE
@@ -67,26 +67,19 @@ EOF
 VALIDATE $? "Creating Node Exporter service file"
 
 echo "Reloading systemd daemon..." | tee -a $LOGFILE
-systemctl daemon-reload
+systemctl daemon-reload >> $LOGFILE 2>&1
 VALIDATE $? "Reloading systemd daemon"
 
 echo "Starting Node Exporter service..." | tee -a $LOGFILE
-systemctl start node_exporter
+systemctl start node_exporter >> $LOGFILE 2>&1
 VALIDATE $? "Starting Node Exporter service"
 
 echo "Enabling Node Exporter service..." | tee -a $LOGFILE
-systemctl enable node_exporter
+systemctl enable node_exporter >> $LOGFILE 2>&1
 VALIDATE $? "Enabling Node Exporter service"
 
-echo "Checking Node Exporter service status..." | tee -a $LOGFILE
-systemctl status node_exporter
-VALIDATE $? "Checking Node Exporter service status"
-
 echo "Restarting Prometheus service..." | tee -a $LOGFILE
-systemctl restart prometheus
+systemctl restart prometheus >> $LOGFILE 2>&1
 VALIDATE $? "Restarting Prometheus service"
 
 echo "Script completed successfully." | tee -a $LOGFILE
-
-
-# 9100

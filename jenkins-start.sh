@@ -2,7 +2,7 @@
 #!/bin/bash
 HOSTED_ZONE_ID="Z0734300103KWSRCOUTDI"
 declare -A instances
-instances=( ["i-01e4093811e9da472"]="jm.test.ullagallu.cloud" ["i-0134e0f164ce1b2bc"]="jn1.test.ullagallu.cloud" )
+instances=( ["i-00f89d3f3cb8542a4"]="jm.test.ullagallu.cloud" ["i-01099dbf42526f440"]="jn1.test.ullagallu.cloud" )
 
 # Start EC2 instances
 echo "Starting EC2 instances..."
