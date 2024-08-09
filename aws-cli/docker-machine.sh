@@ -1,7 +1,7 @@
 #!/bin/bash
 aws ec2 run-instances \
   --image-id ami-0a4408457f9a03be3 \
-  --instance-type t3a.medium \
+  --instance-type t3a.large \
   --key-name siva \
   --user-data file://docker-installation.sh \
   --instance-market-options "MarketType=spot,SpotOptions={SpotInstanceType=one-time}" \
