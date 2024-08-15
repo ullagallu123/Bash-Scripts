@@ -1,5 +1,5 @@
 #!/bin/bash
-#dnf install git -y
+dnf install git -y
 dnf install docker git -y
 systemctl start docker
 usermod -aG docker ec2-user
