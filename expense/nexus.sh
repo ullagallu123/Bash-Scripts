@@ -114,3 +114,4 @@ log "Nexus setup completed."
 # ss -tunlp
 # ip:8081
 # username: admin
+# password: sudo cat /opt/sonatype-work/nexus3/admin.password
