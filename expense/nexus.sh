@@ -112,3 +112,5 @@ log "Nexus setup completed."
 # netstat -lntp
 # journalctl -u nexus
 # ss -tunlp
+# ip:8081
+# username: admin
