@@ -21,11 +21,11 @@ log "Updating package list..."
 apt-get update -y | tee -a "$LOG_FILE"
 
 # Install OpenJDK 8 if not already installed
-if ! dpkg -l | grep -q openjdk-8-jre-headless; then
+if ! dpkg -l | grep -q openjdk-17-jdk ; then
     log "Installing OpenJDK 8..."
-    apt-get install openjdk-8-jre-headless -y | tee -a "$LOG_FILE"
+    apt-get install openjdk-17-jdk  -y | tee -a "$LOG_FILE"
 else
-    log "OpenJDK 8 is already installed."
+    log "OpenJDK 17 is already installed."
 fi
 
 # Download and extract Nexus if not already present
